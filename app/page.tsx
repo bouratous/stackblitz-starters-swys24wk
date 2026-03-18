@@ -475,22 +475,24 @@ export default function Home(){
             ref={inputRef}
             type="text"
             inputMode="numeric"
+            onChange={()=>{}}
+            value={
+              inputRef.current===document.activeElement
+                ? (inputRef.current?.value ?? String(mode==="gross"?grossInput:netInput))
+                : Math.round(mode==="gross"?grossInput:netInput).toLocaleString("fr-FR")
+            }
             onFocus={e=>{
               e.target.value=String(mode==="gross"?grossInput:netInput);
               e.target.select();
             }}
             onBlur={e=>{
-              if(calcTimerRef.current)clearTimeout(calcTimerRef.current);
               const raw=e.target.value.replace(/[^0-9]/g,"");
               const v=raw===""?0:parseInt(raw,10);
               mode==="gross"?setGrossInput(v):setNetInput(v);
-              e.target.value=Math.round(v).toLocaleString("fr-FR");
             }}
             onKeyDown={e=>{
-              if(e.key==="Enter"){(e.target as HTMLInputElement).blur();return;}
-              if(!/[0-9]/.test(e.key)&&!["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"].includes(e.key))e.preventDefault();
+              if(e.key==="Enter"){(e.target as HTMLInputElement).blur();}
             }}
-            defaultValue={Math.round(mode==="gross"?grossInput:netInput).toLocaleString("fr-FR")}
             style={{width:"100%",padding:"16px 52px 16px 16px",fontSize:26,fontWeight:800,border:`2px solid ${mode==="net"?"#10b981":"#6366f1"}`,borderRadius:14,outline:"none",color:"#1a1a2e",background:"white",letterSpacing:-0.5}}/>
           <span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#9ca3af",fontWeight:700}}>{c.symbol}</span>
         </div>
