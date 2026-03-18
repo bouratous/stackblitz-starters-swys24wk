@@ -408,6 +408,25 @@ export default function Home(){
     if(!hoursLocked)setHoursPerWeek(LEGAL_HOURS[k]??40);
     setShowDrawer(false);setMobileTab("calc");
   };
+
+  // Convertit le montant saisi quand on change de devise d'affichage
+  const handleSetDisplayCurrency=(code:string)=>{
+    const oldFx=FX[displayCurrency]??1;
+    const newFx=FX[code]??1;
+    const localFx=(FX[c.currency]??1);
+    // montant actuellement affiché dans l'ancienne devise d'affichage
+    const currentDisplayed=mode==="gross"
+      ? grossInput*(localFx/oldFx)
+      : netInput*(localFx/oldFx);
+    // convertir dans la nouvelle devise
+    const converted=Math.round(currentDisplayed*(oldFx/newFx));
+    if(mode==="gross") setGrossInput(Math.round(converted*(newFx/localFx)));
+    else setNetInput(Math.round(converted*(newFx/localFx)));
+    setDisplayCurrency(code);
+    setCurrencyLocked(true);
+    // mettre à jour l'input DOM
+    if(inputRef.current) inputRef.current.value=converted.toLocaleString("fr-FR");
+  };
   const region=country==="US"?usState:country==="CH"?chCanton:undefined;
   const cOpts=useMemo(()=>opts[country]||{},[opts,country]);
   const setOpt=(k:string,v:string|boolean)=>setOpts(p=>({...p,[country]:{...p[country],[k]:v}}));
@@ -470,7 +489,7 @@ export default function Home(){
         </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
           {DISPLAY_CURRENCIES.map(d=>(
-            <button key={d.code} onClick={()=>{setDisplayCurrency(d.code);setCurrencyLocked(true);}} style={{...pill(displayCurrency===d.code,"#7c3aed"),padding:"5px 10px",fontSize:12}}>
+            <button key={d.code} onClick={()=>handleSetDisplayCurrency(d.code)} style={{...pill(displayCurrency===d.code,"#7c3aed"),padding:"5px 10px",fontSize:12}}>
               {d.symbol} {d.code}
             </button>
           ))}
@@ -487,7 +506,7 @@ export default function Home(){
 
       {/* Input */}
       <div>
-        <p style={lbl}>{mode==="gross"?`${t.grossLabel} ${periodLabel}`:`${t.netLabel} ${periodLabel}`} ({c.symbol})</p>
+        <p style={lbl}>{mode==="gross"?`${t.grossLabel} ${periodLabel}`:`${t.netLabel} ${periodLabel}`} ({dispSym})</p>
         <div style={{position:"relative",marginBottom:10}}>
           <input
             ref={inputRef}
@@ -506,7 +525,7 @@ export default function Home(){
             }}
             onKeyDown={e=>{if(e.key==="Enter")(e.target as HTMLInputElement).blur();}}
             style={{width:"100%",padding:"16px 52px 16px 16px",fontSize:26,fontWeight:800,border:`2px solid ${mode==="net"?"#10b981":"#6366f1"}`,borderRadius:14,outline:"none",color:"#1a1a2e",background:"white",letterSpacing:-0.5}}/>
-          <span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#9ca3af",fontWeight:700}}>{c.symbol}</span>
+          <span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#9ca3af",fontWeight:700}}>{dispSym}</span>
         </div>
         {mode==="net"&&result&&(
           <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"12px 16px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
