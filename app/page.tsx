@@ -409,7 +409,7 @@ export default function Home(){
     setShowDrawer(false);setMobileTab("calc");
   };
   const region=country==="US"?usState:country==="CH"?chCanton:undefined;
-  const cOpts=opts[country]||{};
+  const cOpts=useMemo(()=>opts[country]||{},[opts,country]);
   const setOpt=(k:string,v:string|boolean)=>setOpts(p=>({...p,[country]:{...p[country],[k]:v}}));
   const optsDef=COUNTRY_OPTIONS[country]||[];
 
@@ -485,10 +485,6 @@ export default function Home(){
               const v=raw===""?0:parseInt(raw,10);
               mode==="gross"?setGrossInput(v):setNetInput(v);
               e.target.value=Math.round(v).toLocaleString("fr-FR");
-            }}
-            onKeyDown={e=>{
-              if(e.key==="Enter"){(e.target as HTMLInputElement).blur();return;}
-              if(!/[0-9]/.test(e.key)&&!["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"].includes(e.key))e.preventDefault();
             }}
             onKeyDown={e=>{
               if(e.key==="Enter"){(e.target as HTMLInputElement).blur();return;}
