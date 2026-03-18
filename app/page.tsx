@@ -13,7 +13,7 @@ const T = {
     grossLabel: "Salaire brut",
     netLabel: "Salaire net souhaité",
     necessaryGross: "Brut nécessaire",
-    displayCurrency: "💱 DEVISE D&apos;AFFICHAGE",
+    displayCurrency: "💱 DEVISE AFFICHAGE",
     fixed: "🔒 Fixée",
     auto: "🔓 Auto",
     workParams: "⏱ PARAMÈTRES DE TRAVAIL",
@@ -458,7 +458,25 @@ export default function Home(){
   const pill=(a:boolean,col="#6366f1"):React.CSSProperties=>({border:"none",cursor:"pointer",borderRadius:20,padding:"6px 14px",fontSize:13,fontWeight:600,transition:"all 0.15s",background:a?col:"#f1f5f9",color:a?"white":"#6b7280"});
 
   const SettingsContent=()=>(
-    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+
+      {/* Currency */}
+      <div style={{padding:"14px 16px",background:"#f5f3ff",borderRadius:14,border:"1px solid #ede9fe"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <p style={{...lbl,color:"#7c3aed",marginBottom:0}}>{t.displayCurrency}</p>
+          <button onClick={()=>setCurrencyLocked(l=>!l)} style={{border:"none",cursor:"pointer",borderRadius:99,padding:"5px 12px",fontSize:12,fontWeight:700,background:currencyLocked?"#7c3aed":"#e5e7eb",color:currencyLocked?"white":"#9ca3af"}}>
+            {currencyLocked?t.fixed:t.auto}
+          </button>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+          {DISPLAY_CURRENCIES.map(d=>(
+            <button key={d.code} onClick={()=>{setDisplayCurrency(d.code);setCurrencyLocked(true);}} style={{...pill(displayCurrency===d.code,"#7c3aed"),padding:"5px 10px",fontSize:12}}>
+              {d.symbol} {d.code}
+            </button>
+          ))}
+        </div>
+        {displayCurrency!==c.currency&&<p style={{fontSize:11,color:"#7c3aed",marginTop:8,opacity:0.8}}>{t.exRate(c.currency,dispFx.toFixed(4),displayCurrency)}</p>}
+      </div>
 
       {/* Mode */}
       <div style={{display:"flex",gap:0,background:"#f1f5f9",borderRadius:14,padding:4}}>
@@ -475,22 +493,18 @@ export default function Home(){
             ref={inputRef}
             type="text"
             inputMode="numeric"
+            defaultValue={Math.round(mode==="gross"?grossInput:netInput).toLocaleString("fr-FR")}
             onFocus={e=>{
               e.target.value=String(mode==="gross"?grossInput:netInput);
               e.target.select();
             }}
             onBlur={e=>{
-              if(calcTimerRef.current)clearTimeout(calcTimerRef.current);
               const raw=e.target.value.replace(/[^0-9]/g,"");
               const v=raw===""?0:parseInt(raw,10);
               mode==="gross"?setGrossInput(v):setNetInput(v);
               e.target.value=Math.round(v).toLocaleString("fr-FR");
             }}
-            onKeyDown={e=>{
-              if(e.key==="Enter"){(e.target as HTMLInputElement).blur();return;}
-              if(!/[0-9]/.test(e.key)&&!["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"].includes(e.key))e.preventDefault();
-            }}
-            defaultValue={Math.round(mode==="gross"?grossInput:netInput).toLocaleString("fr-FR")}
+            onKeyDown={e=>{if(e.key==="Enter")(e.target as HTMLInputElement).blur();}}
             style={{width:"100%",padding:"16px 52px 16px 16px",fontSize:26,fontWeight:800,border:`2px solid ${mode==="net"?"#10b981":"#6366f1"}`,borderRadius:14,outline:"none",color:"#1a1a2e",background:"white",letterSpacing:-0.5}}/>
           <span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#9ca3af",fontWeight:700}}>{c.symbol}</span>
         </div>
@@ -518,6 +532,16 @@ export default function Home(){
                 {v>=1000?`${(v/1000).toFixed(v%1000===0?0:1)}k`:v}
               </button>
             ))}
+        </div>
+      </div>
+
+      {/* Period */}
+      <div>
+        <p style={lbl}>{t.displayBy}</p>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {PERIOD_KEYS.map((k,i)=>(
+            <button key={k} style={{...pill(period===k),padding:"8px 16px",fontSize:14}} onClick={()=>setPeriod(k)}>{t.periods[i]}</button>
+          ))}
         </div>
       </div>
 
@@ -553,24 +577,6 @@ export default function Home(){
         </div>
       </div>
 
-      {/* Currency */}
-      <div style={{padding:"14px 16px",background:"#f5f3ff",borderRadius:14,border:"1px solid #ede9fe"}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-          <p style={{...lbl,color:"#7c3aed",marginBottom:0}}>{t.displayCurrency}</p>
-          <button onClick={()=>setCurrencyLocked(l=>!l)} style={{border:"none",cursor:"pointer",borderRadius:99,padding:"5px 12px",fontSize:12,fontWeight:700,background:currencyLocked?"#7c3aed":"#e5e7eb",color:currencyLocked?"white":"#9ca3af"}}>
-            {currencyLocked?t.fixed:t.auto}
-          </button>
-        </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-          {DISPLAY_CURRENCIES.map(d=>(
-            <button key={d.code} onClick={()=>{setDisplayCurrency(d.code);setCurrencyLocked(true);}} style={{...pill(displayCurrency===d.code,"#7c3aed"),padding:"5px 10px",fontSize:12}}>
-              {d.symbol} {d.code}
-            </button>
-          ))}
-        </div>
-        {displayCurrency!==c.currency&&<p style={{fontSize:11,color:"#7c3aed",marginTop:8,opacity:0.8}}>{t.exRate(c.currency,dispFx.toFixed(4),displayCurrency)}</p>}
-      </div>
-
       {/* US State / CH Canton */}
       {country==="US"&&(
         <div>
@@ -592,16 +598,6 @@ export default function Home(){
           </select>
         </div>
       )}
-
-      {/* Period */}
-      <div>
-        <p style={lbl}>{t.displayBy}</p>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          {PERIOD_KEYS.map((k,i)=>(
-            <button key={k} style={{...pill(period===k),padding:"8px 16px",fontSize:14}} onClick={()=>setPeriod(k)}>{t.periods[i]}</button>
-          ))}
-        </div>
-      </div>
 
       {/* Country options */}
       {optsDef.length>0&&(
