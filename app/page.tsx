@@ -469,8 +469,18 @@ export default function Home(){
       <div>
         <p style={lbl}>{mode==="gross"?`${t.grossLabel} ${periodLabel}`:`${t.netLabel} ${periodLabel}`} ({c.symbol})</p>
         <div style={{position:"relative",marginBottom:10}}>
-          <input type="number" value={mode==="gross"?grossInput:netInput}
-            onChange={e=>{const v=Math.max(0,Number(e.target.value));mode==="gross"?setGrossInput(v):setNetInput(v);}}
+          <input
+            type="text"
+            inputMode="numeric"
+            value={(mode==="gross"?grossInput:netInput)===0?"":Math.round(mode==="gross"?grossInput:netInput).toLocaleString("fr-FR")}
+            onChange={e=>{
+              const raw=e.target.value.replace(/\s/g,"").replace(/[^0-9]/g,"");
+              const v=raw===""?0:Math.max(0,parseInt(raw,10));
+              mode==="gross"?setGrossInput(v):setNetInput(v);
+            }}
+            onKeyDown={e=>{if(e.key==="Enter")(e.target as HTMLInputElement).blur();}}
+            onFocus={e=>e.target.select()}
+            placeholder="0"
             style={{width:"100%",padding:"16px 52px 16px 16px",fontSize:26,fontWeight:800,border:`2px solid ${mode==="net"?"#10b981":"#6366f1"}`,borderRadius:14,outline:"none",color:"#1a1a2e",background:"white",letterSpacing:-0.5}}/>
           <span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#9ca3af",fontWeight:700}}>{c.symbol}</span>
         </div>
