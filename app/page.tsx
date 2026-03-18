@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 
 type Lang = "fr" | "en";
 
@@ -385,6 +385,8 @@ export default function Home(){
   const [mode,setMode]=useState<"gross"|"net">("gross");
   const [grossInput,setGrossInput]=useState(50000);
   const [netInput,setNetInput]=useState(35000);
+  const inputRef=useRef<HTMLInputElement>(null);
+  const calcTimerRef=useRef<ReturnType<typeof setTimeout>|null>(null);
   const [country,setCountry]=useState("FR");
   const [period,setPeriod]=useState<Period>("annual");
   const [usState,setUsState]=useState("CA");
@@ -470,17 +472,29 @@ export default function Home(){
         <p style={lbl}>{mode==="gross"?`${t.grossLabel} ${periodLabel}`:`${t.netLabel} ${periodLabel}`} ({c.symbol})</p>
         <div style={{position:"relative",marginBottom:10}}>
           <input
+            ref={inputRef}
             type="text"
             inputMode="numeric"
-            value={(mode==="gross"?grossInput:netInput)===0?"":Math.round(mode==="gross"?grossInput:netInput).toLocaleString("fr-FR")}
-            onChange={e=>{
-              const raw=e.target.value.replace(/\s/g,"").replace(/[^0-9]/g,"");
-              const v=raw===""?0:Math.max(0,parseInt(raw,10));
-              mode==="gross"?setGrossInput(v):setNetInput(v);
+            onFocus={e=>{
+              e.target.value=String(mode==="gross"?grossInput:netInput);
+              e.target.select();
             }}
-            onKeyDown={e=>{if(e.key==="Enter")(e.target as HTMLInputElement).blur();}}
-            onFocus={e=>e.target.select()}
-            placeholder="0"
+            onBlur={e=>{
+              if(calcTimerRef.current)clearTimeout(calcTimerRef.current);
+              const raw=e.target.value.replace(/[^0-9]/g,"");
+              const v=raw===""?0:parseInt(raw,10);
+              mode==="gross"?setGrossInput(v):setNetInput(v);
+              e.target.value=Math.round(v).toLocaleString("fr-FR");
+            }}
+            onKeyDown={e=>{
+              if(e.key==="Enter"){(e.target as HTMLInputElement).blur();return;}
+              if(!/[0-9]/.test(e.key)&&!["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"].includes(e.key))e.preventDefault();
+            }}
+            onKeyDown={e=>{
+              if(e.key==="Enter"){(e.target as HTMLInputElement).blur();return;}
+              if(!/[0-9]/.test(e.key)&&!["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"].includes(e.key))e.preventDefault();
+            }}
+            defaultValue={Math.round(mode==="gross"?grossInput:netInput).toLocaleString("fr-FR")}
             style={{width:"100%",padding:"16px 52px 16px 16px",fontSize:26,fontWeight:800,border:`2px solid ${mode==="net"?"#10b981":"#6366f1"}`,borderRadius:14,outline:"none",color:"#1a1a2e",background:"white",letterSpacing:-0.5}}/>
           <span style={{position:"absolute",right:16,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#9ca3af",fontWeight:700}}>{c.symbol}</span>
         </div>
